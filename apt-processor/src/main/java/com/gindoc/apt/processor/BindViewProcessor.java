@@ -2,6 +2,7 @@ package com.gindoc.apt.processor;
 
 import com.gindoc.apt.annotation.BindView;
 import com.google.auto.service.AutoService;
+import com.squareup.javapoet.JavaFile;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -76,17 +77,21 @@ public class BindViewProcessor extends AbstractProcessor {
             BindView annotation = variableElement.getAnnotation(BindView.class);
             int id = annotation.value();
             proxy.putElement(id, variableElement);
+            mMessager.printMessage(Diagnostic.Kind.NOTE, "variableElement's name is " + variableElement.getSimpleName().toString() + "   ---- type is " + variableElement.asType().toString());
         }
 
         for (Map.Entry<String, ClassCreatorProxy> entry : mProxyMap.entrySet()) {
             ClassCreatorProxy proxy = entry.getValue();
             mMessager.printMessage(Diagnostic.Kind.NOTE, " --> create " + proxy.getProxyClassFullName());
             try {
-                JavaFileObject jfo = processingEnv.getFiler().createSourceFile(proxy.getProxyClassFullName(), proxy.getTypeElement());
-                Writer writer = jfo.openWriter();
-                writer.write(proxy.generateJavaCode());
-                writer.flush();
-                writer.close();
+                JavaFile file = JavaFile.builder(proxy.getPackageName(), proxy.generateJavaCodeByJavaPoet()).build();
+                file.writeTo(processingEnv.getFiler());
+
+//                JavaFileObject jfo = processingEnv.getFiler().createSourceFile(proxy.getProxyClassFullName(), proxy.getTypeElement());
+//                Writer writer = jfo.openWriter();
+//                writer.write(proxy.generateJavaCode());
+//                writer.flush();
+//                writer.close();
             } catch (IOException e) {
                 e.printStackTrace();
                 mMessager.printMessage(Diagnostic.Kind.NOTE, " --> create " + proxy.getProxyClassFullName() + " error, " + e.getMessage());

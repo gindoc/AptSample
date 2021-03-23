@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         BindViewTools.bind(this)
 
-        text1.text = "text1"
-        text2.text = "text2"
+        text1.text = "text1---javaPoet"
+        text2.text = "text2---javaPoet"
     }
 }

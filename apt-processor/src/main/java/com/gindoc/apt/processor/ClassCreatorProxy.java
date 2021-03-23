@@ -1,8 +1,13 @@
 package com.gindoc.apt.processor;
 
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
+
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -34,6 +39,10 @@ class ClassCreatorProxy {
         return mPackageName + "." + mBindingClassName;
     }
 
+    public String getPackageName() {
+        return mPackageName;
+    }
+
     public TypeElement getTypeElement() {
         return mTypeElement;
     }
@@ -61,4 +70,28 @@ class ClassCreatorProxy {
         }
         sb.append("\r}\n");
     }
+
+
+    public TypeSpec generateJavaCodeByJavaPoet() {
+        return TypeSpec.classBuilder(mBindingClassName)
+                .addModifiers(Modifier.PUBLIC)
+                .addMethod(generateMethodCodeByJavaPoet())
+                .build();
+    }
+
+    public MethodSpec generateMethodCodeByJavaPoet() {
+        ClassName host = ClassName.bestGuess(mTypeElement.getQualifiedName().toString());
+        MethodSpec.Builder builder = MethodSpec.methodBuilder("bind")
+                .addModifiers(Modifier.PUBLIC)
+                .returns(void.class)
+                .addParameter(host, "host");
+        for (Map.Entry<Integer, VariableElement> entry : mVariableElementMap.entrySet()) {
+            VariableElement element = entry.getValue();
+            String name = element.getSimpleName().toString();
+            String type = element.asType().toString();
+            builder.addCode("host." + name + " = (" + type + ")(host.findViewById(" + entry.getKey() + "));\n");
+        }
+        return builder.build();
+    }
+
 }
